@@ -1,7 +1,7 @@
 {
-  "token": "MTU1Mjk4NzQxMDQ0OTY5NDgyMQ.GjXiq0.-OH6od3Dz60n6_SrSqyznBC1nEF8LgN_QvNJjU",
+  "token_b64": "TVRVMU1qazROelF4TURRME9UWTVORGd5TVEuRzhFbGZ3LktUeEhGazR6blBRcWhWRGlQVVIzbWQ4                                                    NGtaRU9HdEZ0Q2FKLW9N",
   "clientId": "1552987410449694821",
-  "guildId": "1510255795227590657",
+  "guildId": "ISI_GUILD_ID_LU",
   "logChannelName": "raid-logs",
   "antiRaid": {
     "enabled": true,
