@@ -1,21 +1,69 @@
 const { Client, GatewayIntentBits, Partials, REST, Routes,
-        SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder,
+        PermissionFlagsBits, EmbedBuilder,
         ChannelType } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-const CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+// ============ LOAD CONFIG (dari file ATAU ENV) ============
+let CONFIG;
+try {
+  CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+} catch (e) {
+  CONFIG = {};
+}
+
+// ENV selalu override (buat Railway/deploy)
 if (process.env.DISCORD_TOKEN) CONFIG.token = process.env.DISCORD_TOKEN;
 if (process.env.CLIENT_ID) CONFIG.clientId = process.env.CLIENT_ID;
 if (process.env.GUILD_ID) CONFIG.guildId = process.env.GUILD_ID;
+
+// Default anti-raid
+CONFIG.logChannelName = CONFIG.logChannelName || 'raid-logs';
+CONFIG.alertChannelName = CONFIG.alertChannelName || 'raid-alerts';
+CONFIG.antiRaid = CONFIG.antiRaid || {
+  enabled: true,
+  joinThreshold: 5,
+  joinWindowSec: 10,
+  accountAgeMinDays: 7,
+  autoKickNewAccounts: true,
+  autoLockdown: true,
+  lockdownDurationMin: 10
+};
+CONFIG.welcome = CONFIG.welcome || {
+  enabled: true,
+  channelName: 'welcome',
+  message: '🎉 Welcome {user} ke {server}!'
+};
+CONFIG.autoRole = CONFIG.autoRole || { enabled: false, roleName: 'Member' };
+
+// Validate
+if (!CONFIG.token || CONFIG.token.includes('ISI_')) {
+  console.error('❌ DISCORD_TOKEN belum diset!');
+  process.exit(1);
+}
+if (!CONFIG.guildId || CONFIG.guildId.includes('ISI_')) {
+  console.error('❌ GUILD_ID belum diset!');
+  process.exit(1);
+}
+
+console.log('✅ Config loaded:');
+console.log('   Guild ID:', CONFIG.guildId);
+console.log('   Client ID:', CONFIG.clientId);
+console.log('   Token:', CONFIG.token.substring(0, 20) + '...');
+
+// ============ DATA ============
 let DATA = { whitelist: [], raidMode: false, lockdownUntil: 0 };
 const DATA_PATH = path.join(__dirname, 'data.json');
 
 if (fs.existsSync(DATA_PATH)) {
   try { DATA = { ...DATA, ...JSON.parse(fs.readFileSync(DATA_PATH, 'utf8')) }; } catch(e){}
 }
-function saveData(){ fs.writeFileSync(DATA_PATH, JSON.stringify(DATA, null, 2)); }
+function saveData(){
+  try { fs.writeFileSync(DATA_PATH, JSON.stringify(DATA, null, 2)); }
+  catch (e) { /* read-only filesystem di cloud — skip */ }
+}
 
+// ============ CLIENT ============
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -110,13 +158,13 @@ client.on('guildMemberAdd', async member => {
 
   if (DATA.raidMode && isNew && CONFIG.antiRaid.autoKickNewAccounts) {
     await member.kick('Raid mode: akun baru').catch(()=>{});
-    await logAction(guild, `🔨 Kick **${member.user.tag}** (akun ${accountAgeDays.toFixed(1)}h) saat raid`, 0xFFAA00);
+    await logAction(guild, `🔨 Kick **${member.user.tag}** saat raid`, 0xFFAA00);
     return;
   }
 
   if (CONFIG.antiRaid.autoKickNewAccounts && isNew && !DATA.raidMode) {
     await member.kick(`Akun terlalu baru (${accountAgeDays.toFixed(1)}h)`).catch(()=>{});
-    await logAction(guild, `⚠️ Kick akun baru: **${member.user.tag}** (${accountAgeDays.toFixed(1)}d)`, 0xFFAA00);
+    await logAction(guild, `⚠️ Kick akun baru: **${member.user.tag}**`, 0xFFAA00);
     return;
   }
 
