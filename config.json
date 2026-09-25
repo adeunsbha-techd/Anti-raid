@@ -1,0 +1,20 @@
+{
+  "token": "MTU1Mjk4NzQxMDQ0OTY5NDgyMQ.Ggpl4X.rFb6scbToIuRqfWqSeEApMHw7zqrpqRs-0Q3S0",
+  "clientId": "1552987410449694821",
+  "guildId": "1510255795227590657",
+  "logChannelName": "raid-logs",
+  "antiRaid": {
+    "enabled": true,
+    "joinThreshold": 5,
+    "joinWindowSec": 10,
+    "accountAgeMinDays": 7,
+    "autoKickNewAccounts": true,
+    "lockdownDurationMin": 10
+  },
+  "welcome": {
+    "enabled": true,
+    "channelName": "welcome",
+    "message": "🎉 Welcome {user} ke {server}!"
+  },
+  "autoRole": { "enabled": false, "roleName": "Member" }
+}
